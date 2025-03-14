@@ -37,6 +37,6 @@ fn main() {
         println!("Simple Rust ToDo-List");
 
         let command = utils::task_menu(tasks);
-        utils::handle_command(command, file);
+        utils::handle_command(command, file, tasks);
     }
 }

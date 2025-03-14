@@ -1,13 +1,14 @@
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
 use std::process;
 
 pub fn task_menu(tasks: Vec<String>) -> String {
     let mut command = String::new();
-    let command_list = ["n", "c", "q"];
+    let command_list = ["n", "c", "q", "r"];
 
-    for task in &tasks {
-        println!("{task}");
+    for i in 0..tasks.len() {
+        let task = &tasks[i];
+        println!("[{i}] {task}");
     }
 
     print!("\n");
@@ -48,13 +49,41 @@ pub fn clear_file() {
     }
 }
 
-pub fn handle_command(command: String, file: fs::File) {
+pub fn remove_task(mut file: fs::File, mut tasks: Vec<String>) -> io::Result<()> {
+    let mut task = String::new();
+
+    print!("$/remove_task/> ");
+    io::stdout().flush().expect("Failed to flush stdout");
+    io::stdin().read_line(&mut task).expect("Invalid input!");
+    let task: usize = task.trim().parse().expect("Not a valid ID!");
+
+    let task_line = &tasks.clone()[task];
+    tasks.remove(task);
+
+    let reader = io::BufReader::new(file);
+
+    let lines: Vec<String> = reader.lines().filter_map(|line| {
+        let line = line.ok()?;
+        if &line != task_line {
+            Some(line)
+        } else {
+            None
+        }
+    });
+
+    Ok(())
+}
+
+pub fn handle_command(command: String, file: fs::File, tasks: Vec<String>) {
     match command.trim() {
         "n" => add_task(file),
         "q" => {
             println!("Quitting...");
             process::exit(0);
         },
+        "r" => {
+            remove_task(file, tasks);
+        }
         "c" => clear_file(),
         _ => {
             println!("Invalid command!");
